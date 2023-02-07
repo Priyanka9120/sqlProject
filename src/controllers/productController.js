@@ -1,9 +1,6 @@
 const mysql = require("mysql");
-const ShortUniqueId = require('short-unique-id')
 const SQL = require('../SQL/config.js')
 const Validator = require('../Validation/validation.js')
-const uid = new ShortUniqueId();
-const uidWithTimestamp = uid.stamp(36);
 const db = mysql.createConnection(SQL);
 
 
@@ -11,27 +8,34 @@ const createProduct = async (req, res) => {
     try {
 
         let data = req.body
-        let { productId, productName, description, productImage, astrollorger } = data
+        let { productName, productDescription, productImage, astrologerId } = data
 
 
         if (Object.keys(data).length == 0) return res.status(400).send({ status: false, msg: "Enter input field!" })
 
         if (!Validator.isEmpty(productName)) return res.status(400).send({ status: false, msg: "Enter product name!" })
 
-        if (!Validator.isEmpty(description)) return res.status(400).send({ status: false, msg: "Write product description!" })
+        if (!Validator.isEmpty(productDescription)) return res.status(400).send({ status: false, msg: "Write product description!" })
 
         if (!Validator.isEmpty(productImage)) return res.status(400).send({ status: false, msg: "Enter product image link!" })
         if (!Validator.imgRegex.test(productImage)) return res.status(400).send({ status: false, msg: "Enter valid product image link..!!" })
 
-        if (!Validator.isEmpty(astrollorger)) return res.status(400).send({ status: false, msg: "Enter astrollorger!" })
+      //==============check duplicate Id ===================//
+        db.query(`SELECT * from products WHERE (astrologerId = "${astrologerId}")`, async (err, results) => {
 
+            if (err) { console.log(err) }
 
-        db.query(`INSERT INTO products SET ?`, { productId: uidWithTimestamp, productName: productName, description: description, productImage: productImage, astrollorger: astrollorger }, (err, results) => {
-            if (err) {
-                console.log(err);
-            } else {
-                return res.status(201).send({ status: true, message: 'Product Created' });
+            if (results.length > 0) {
+                for (let i in results) if (results[i].astrologerId == astrologerId) return res.status(400).send({ status: false, message: 'The astrologerId is already exist!' })
             }
+
+            db.query(`INSERT INTO products SET ?`, { astrologerId: astrologerId, productName: productName, productDescription: productDescription, productImage: productImage }, (err, results) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    return res.status(201).send({ status: true, message: 'Product Created' });
+                }
+            })
         })
     }
     catch (error) {
@@ -44,12 +48,23 @@ const createProduct = async (req, res) => {
 const getProduct = async (req, res) => {
     try {
 
-        db.query(`SELECT * from products`, async (err, results) => {
+        let astrologerId = req.body.astrologerId
 
-            if (err) {
-                console.log(err)
-            } else {
-                return res.status(200).send({ status: true, message: 'Product Fetched!', data: results });
+        if (!astrologerId) return res.status(400).send({ status: false, message: 'Please enter you astrologerId!' })
+
+        db.query(`SELECT * from products  WHERE (astrologerId = "${astrologerId}")`, async (err, results) => {
+
+            if (err) console.log(err)
+
+            if (results.length == 0) return res.status(200).send({ status: false, message: 'No Product Available!' });
+
+            for (let i in results) {
+
+                if (results[i].astrologerId == astrologerId) {
+
+                    return res.status(200).send({ status: true, message: 'Product Fetched!', data: results[i] });
+
+                }
             }
         })
     }
