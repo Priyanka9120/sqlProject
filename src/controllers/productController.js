@@ -13,11 +13,11 @@ const createProduct = async (req, res) => {
         let data = req.body
         let { productId, productName, description, productImage, astrollorger } = data
 
-        
+
         if (Object.keys(data).length == 0) return res.status(400).send({ status: false, msg: "Enter input field!" })
 
         if (!Validator.isEmpty(productName)) return res.status(400).send({ status: false, msg: "Enter product name!" })
- 
+
         if (!Validator.isEmpty(description)) return res.status(400).send({ status: false, msg: "Write product description!" })
 
         if (!Validator.isEmpty(productImage)) return res.status(400).send({ status: false, msg: "Enter product image link!" })
@@ -30,7 +30,7 @@ const createProduct = async (req, res) => {
             if (err) {
                 console.log(err);
             } else {
-                return res.status(201).send({ status: false, message: 'Product Created' });
+                return res.status(201).send({ status: true, message: 'Product Created' });
             }
         })
     }
@@ -49,7 +49,7 @@ const getProduct = async (req, res) => {
             if (err) {
                 console.log(err)
             } else {
-                return res.status(200).send({ status: false, message: 'Product Fetched!', data: results });
+                return res.status(200).send({ status: true, message: 'Product Fetched!', data: results });
             }
         })
     }
